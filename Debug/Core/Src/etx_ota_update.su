@@ -1,0 +1,5 @@
+../Core/Src/etx_ota_update.c:38:13:etx_ota_download_and_flash	16	static
+../Core/Src/etx_ota_update.c:92:20:etx_process_data	48	static
+../Core/Src/etx_ota_update.c:216:17:etx_receive_chunk	24	static
+../Core/Src/etx_ota_update.c:310:13:etx_ota_send_resp	32	static
+../Core/Src/etx_ota_update.c:333:26:write_data_to_flash_app	56	static

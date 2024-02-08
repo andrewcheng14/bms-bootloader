@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include "etx_ota_update.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,7 +41,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-UART_HandleTypeDef huart2;
+UART_HandleTypeDef huart2;  // used as virtual com port (printf)
+UART_HandleTypeDef huart3;  // used for OTA update
 
 /* USER CODE BEGIN PV */
 
@@ -50,6 +52,7 @@ UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
 static void goto_application(void);
 /* USER CODE END PFP */
@@ -88,11 +91,50 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   printf("Starting Bootloader\n");
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-  HAL_Delay(5000);
+  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);  // Turn on LD2 (Green LED)
+  HAL_Delay(1000);
 
+  printf("Press the User Button LD2 to trigger OTA update...\r\n");
+
+  /* Check the GPIO for 3 seconds */
+  GPIO_PinState OTA_Pin_state;
+  uint32_t end_tick = HAL_GetTick() + 3000;   // from now to 3 Seconds
+
+  printf("Press the User Button PC13 to trigger OTA update...\r\n");
+  do {
+	  OTA_Pin_state = HAL_GPIO_ReadPin( GPIOC, GPIO_PIN_13 );
+	  uint32_t current_tick = HAL_GetTick();
+
+	  /* Check the button is pressed or not for 3seconds */
+	  if( ( OTA_Pin_state != GPIO_PIN_RESET ) || ( current_tick > end_tick ) ) {
+		  /* Either timeout or Button is pressed */
+		  break;
+	  }
+  } while (1);
+
+  /*Start the Firmware or Application update */
+  if( OTA_Pin_state == GPIO_PIN_SET )
+  {
+    printf("Starting Firmware Download!!!\r\n");
+    /* OTA Request. Receive the data from the UART4 and flash */
+    if( etx_ota_download_and_flash() != ETX_OTA_EX_OK )
+    {
+      /* Error. Don't process. */
+      printf("OTA Update : ERROR!!! HALT!!!\r\n");
+      while( 1 );
+    }
+    else
+    {
+      /* Reset to load the new application */
+      printf("Firmware update is done!!! Rebooting...\r\n");
+      HAL_NVIC_SystemReset();
+    }
+  }
+
+  // Jump to app
   goto_application();
   /* USER CODE END 2 */
 
@@ -188,6 +230,39 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * @brief USART3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART3_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART3_Init 0 */
+
+  /* USER CODE END USART3_Init 0 */
+
+  /* USER CODE BEGIN USART3_Init 1 */
+
+  /* USER CODE END USART3_Init 1 */
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 115200;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_TX_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART3_Init 2 */
+
+  /* USER CODE END USART3_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -207,11 +282,11 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  /*Configure GPIO pin : PC13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LD2_Pin */
   GPIO_InitStruct.Pin = LD2_Pin;
