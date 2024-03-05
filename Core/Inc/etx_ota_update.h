@@ -10,143 +10,118 @@
 
 #define INC_ETX_OTA_UPDATE_H_
 
-#define ETX_OTA_SOF  0xAA    // Start of Frame
-#define ETX_OTA_EOF  0xBB    // End of Frame
-#define ETX_OTA_ACK  0x00    // ACK
-#define ETX_OTA_NACK 0x01    // NACK
+#define APP_FLASH_ADDR 0x08040000  // Application's flash address
 
-#define ETX_APP_FLASH_ADDR 0x08040000   //Application's Flash Address
+#define PACKET_SOF 0x02  // Start of Frame
+#define PACKET_EOF 0x03  // End of Frame
+#define PACKET_ACK 0x00  // Acknowledge
+#define PACKET_NACK 0x01 // Not Acknowledge
 
-#define ETX_OTA_DATA_MAX_SIZE ( 1024 )  //Maximum data Size
-#define ETX_OTA_DATA_OVERHEAD (    9 )  //data overhead
-#define ETX_OTA_PACKET_MAX_SIZE ( ETX_OTA_DATA_MAX_SIZE + ETX_OTA_DATA_OVERHEAD )
+#define PACKET_MAX_PAYLOAD_SIZE 256  // Maximum payload size for a OTA packet in bytes
+#define PACKET_OVERHEAD 11 // 11 bytes used for a OTA packet's metadata (all fields except payload)
+#define PACKET_MAX_SIZE (PACKET_MAX_PAYLOAD_SIZE + PACKET_OVERHEAD)  // Max size of OTA packet in bytes
+#define APP_FW_MAX_SIZE (0x0807FFFF - 0x08008000)  // Sector 7 end - Sector 2 start
 
-/*
- * Exception codes
- */
-typedef enum
-{
-  ETX_OTA_EX_OK       = 0,    // Success
-  ETX_OTA_EX_ERR      = 1,    // Failure
-}ETX_OTA_EX_;
+/* Enum definitions */
+typedef enum ota_state {
+	IDLE = 0,
+	OTA_START,
+	OTA_HEADER,
+	OTA_DATA,
+	OTA_END,
+} ota_state_t;
 
-/*
- * OTA process state
- */
-typedef enum
-{
-  ETX_OTA_STATE_IDLE    = 0,
-  ETX_OTA_STATE_START   = 1,
-  ETX_OTA_STATE_HEADER  = 2,
-  ETX_OTA_STATE_DATA    = 3,
-  ETX_OTA_STATE_END     = 4,
-}ETX_OTA_STATE_;
+typedef enum ota_packet_type {
+    COMMAND = 0,
+    HEADER,
+    DATA,
+    RESPONSE,
+} ota_packet_type_t;
 
-/*
- * Packet type
- */
-typedef enum
-{
-  ETX_OTA_PACKET_TYPE_CMD       = 0,    // Command
-  ETX_OTA_PACKET_TYPE_DATA      = 1,    // Data
-  ETX_OTA_PACKET_TYPE_HEADER    = 2,    // Header
-  ETX_OTA_PACKET_TYPE_RESPONSE  = 3,    // Response
-}ETX_OTA_PACKET_TYPE_;
+typedef enum ota_command {
+    OTA_START_CMD = 0,    // OTA Start command
+    OTA_END_CMD   = 1,    // OTA End command
+    OTA_ABORT_CMD = 2,    // OTA Abort command
+} ota_command_t;
+
+/* Struct definitions */
+typedef struct FileInfo {
+    uint32_t file_size;
+    uint32_t crc32;
+} FileInfo;
 
 /*
- * OTA Commands
+ * Packet Structure:
+ * ----------------------------------------------------------------------------------------------------
+ * |     u8     |     u8      |      u16      |       u16      |        u8         |  u32  |    u8    |
+ * ----------------------------------------------------------------------------------------------------
+ * | Start Byte | Packet Type |   Reserved    | Payload Length |      Command      | CRC32 | End Byte |
+ * ----------------------------------------------------------------------------------------------------
  */
-typedef enum
-{
-  ETX_OTA_CMD_START = 0,    // OTA Start command
-  ETX_OTA_CMD_END   = 1,    // OTA End command
-  ETX_OTA_CMD_ABORT = 2,    // OTA Abort command
-}ETX_OTA_CMD_;
+typedef struct OtaCommandPacket {
+    uint8_t sof;
+    uint8_t packet_type;
+    uint16_t packet_num;  // "don't care" for command packet
+    uint16_t payload_len;
+    uint8_t cmd;
+    uint32_t crc32;
+    uint8_t eof;
+}__attribute__((packed)) OtaCommandPacket;
 
 /*
- * OTA meta info
- */
-typedef struct
-{
-  uint32_t package_size;
-  uint32_t package_crc;
-  uint32_t reserved1;
-  uint32_t reserved2;
-}__attribute__((packed)) meta_info;
+ * Packet Structure:
+ * ----------------------------------------------------------------------------------------------------
+ * |     u8     |     u8      |      u16      |       u16      | FileInfo (64 bits)|  u32  |    u8    |
+ * ----------------------------------------------------------------------------------------------------
+ * | Start Byte | Packet Type |   Reserved    | Payload Length | File Information  | CRC32 | End Byte |
+ * ----------------------------------------------------------------------------------------------------
+*/
+typedef struct OtaHeaderPacket {
+    uint8_t sof;
+    uint8_t packet_type;
+    uint16_t packet_num;  // "don't care" for header packet
+    uint16_t payload_len;
+    FileInfo file_info;
+    uint32_t crc32;
+    uint8_t eof;
+}__attribute__((packed)) OtaHeaderPacket;
 
 /*
- * OTA Command format
- *
- * ________________________________________
- * |     | Packet |     |     |     |     |
- * | SOF | Type   | Len | CMD | CRC | EOF |
- * |_____|________|_____|_____|_____|_____|
- *   1B      1B     2B    1B     4B    1B
- */
-typedef struct
-{
-  uint8_t   sof;
-  uint8_t   packet_type;
-  uint16_t  data_len;
-  uint8_t   cmd;
-  uint32_t  crc;
-  uint8_t   eof;
-}__attribute__((packed)) ETX_OTA_COMMAND_;
+ * Packet Structure:
+ * ----------------------------------------------------------------------------------------------------
+ * |     u8     |     u8      |      u16      |       u16      | u8* (Variable Len)|  u32  |    u8    |
+ * ----------------------------------------------------------------------------------------------------
+ * | Start Byte | Packet Type | Packet Number | Payload Length |     Payload       | CRC32 | End Byte |
+ * ----------------------------------------------------------------------------------------------------
+*/
+typedef struct OtaDataPacket {
+    uint8_t sof;
+    uint8_t packet_type;
+    uint16_t packet_num;
+    uint16_t payload_len;
+    uint8_t* payload;
+    uint32_t crc32;
+    uint8_t eof;
+}__attribute__((packed)) OtaDataPacket;
 
 /*
- * OTA Header format
- *
- * __________________________________________
- * |     | Packet |     | Header |     |     |
- * | SOF | Type   | Len |  Data  | CRC | EOF |
- * |_____|________|_____|________|_____|_____|
- *   1B      1B     2B     16B     4B    1B
- */
-typedef struct
-{
-  uint8_t     sof;
-  uint8_t     packet_type;
-  uint16_t    data_len;
-  meta_info   meta_data;
-  uint32_t    crc;
-  uint8_t     eof;
-}__attribute__((packed)) ETX_OTA_HEADER_;
+ * Packet Structure:
+ * ----------------------------------------------------------------------------------------------------
+ * |     u8     |     u8      |      u16      |       u16      |        u8         |  u32  |    u8    |
+ * ----------------------------------------------------------------------------------------------------
+ * | Start Byte | Packet Type |   Reserved    | Payload Length |      Status       | CRC32 | End Byte |
+ * ----------------------------------------------------------------------------------------------------
+*/
+typedef struct OtaResponsePacket {
+    uint8_t sof;
+    uint8_t packet_type;
+    uint16_t packet_num;  // "don't care" for response packet
+    uint16_t payload_len;
+    uint8_t status;
+    uint32_t crc32;
+    uint8_t eof;
+}__attribute__((packed)) OtaResponsePacket;
 
-/*
- * OTA Data format
- *
- * __________________________________________
- * |     | Packet |     |        |     |     |
- * | SOF | Type   | Len |  Data  | CRC | EOF |
- * |_____|________|_____|________|_____|_____|
- *   1B      1B     2B    nBytes   4B    1B
- */
-typedef struct
-{
-  uint8_t     sof;
-  uint8_t     packet_type;
-  uint16_t    data_len;
-  uint8_t     *data;
-}__attribute__((packed)) ETX_OTA_DATA_;
 
-/*
- * OTA Response format
- *
- * __________________________________________
- * |     | Packet |     |        |     |     |
- * | SOF | Type   | Len | Status | CRC | EOF |
- * |_____|________|_____|________|_____|_____|
- *   1B      1B     2B      1B     4B    1B
- */
-typedef struct
-{
-  uint8_t   sof;
-  uint8_t   packet_type;
-  uint16_t  data_len;
-  uint8_t   status;
-  uint32_t  crc;
-  uint8_t   eof;
-}__attribute__((packed)) ETX_OTA_RESP_;
-
-ETX_OTA_EX_ etx_ota_download_and_flash( void );
+int etx_ota_download_and_flash( void );
 #endif /* INC_ETX_OTA_UPDATE_H_ */

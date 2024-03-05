@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <string.h>
 #include "etx_ota_update.h"
 /* USER CODE END Includes */
 
@@ -37,6 +38,8 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+#define MAX_BUF_SIZE 512
+#define OTA_RESPONSE_PACKET_SIZE 12
 
 /* USER CODE END PM */
 
@@ -45,7 +48,7 @@ UART_HandleTypeDef huart2;  // used as virtual com port (printf)
 UART_HandleTypeDef huart3;  // used for OTA update
 
 /* USER CODE BEGIN PV */
-
+static uint8_t Rx_Buffer[MAX_BUF_SIZE];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,46 +99,54 @@ int main(void)
   printf("Starting Bootloader\n");
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);  // Turn on LD2 (Green LED)
   HAL_Delay(1000);
+//
+//  printf("Press the User Button LD2 to trigger OTA update...\r\n");
+//
+//  /* Check the GPIO for 3 seconds */
+//  GPIO_PinState OTA_Pin_state;
+//  uint32_t end_tick = HAL_GetTick() + 3000;   // from now to 3 Seconds
+//
+//  printf("Press the User Button PC13 to trigger OTA update...\r\n");
+//  do {
+//	  OTA_Pin_state = HAL_GPIO_ReadPin( GPIOC, GPIO_PIN_13 );
+//	  uint32_t current_tick = HAL_GetTick();
+//
+//	  /* Check the button is pressed or not for 3seconds */
+//	  if( ( OTA_Pin_state != GPIO_PIN_RESET ) || ( current_tick > end_tick ) ) {
+//		  /* Either timeout or Button is pressed */
+//		  break;
+//	  }
+//  } while (1);
+//
+//  /*Start the Firmware or Application update */
+//  if( OTA_Pin_state == GPIO_PIN_SET )
+//  {
+//    printf("Starting Firmware Download!!!\r\n");
+//    /* OTA Request. Receive the data from the UART4 and flash */
+//    if( etx_ota_download_and_flash() != ETX_OTA_EX_OK )
+//    {
+//      /* Error. Don't process. */
+//      printf("OTA Update : ERROR!!! HALT!!!\r\n");
+//      while( 1 );
+//    }
+//    else
+//    {
+//      /* Reset to load the new application */
+//      printf("Firmware update is done!!! Rebooting...\r\n");
+//      HAL_NVIC_SystemReset();
+//    }
+//  }
+//
+//  // Jump to app
+//  goto_application();
 
-  printf("Press the User Button LD2 to trigger OTA update...\r\n");
-
-  /* Check the GPIO for 3 seconds */
-  GPIO_PinState OTA_Pin_state;
-  uint32_t end_tick = HAL_GetTick() + 3000;   // from now to 3 Seconds
-
-  printf("Press the User Button PC13 to trigger OTA update...\r\n");
-  do {
-	  OTA_Pin_state = HAL_GPIO_ReadPin( GPIOC, GPIO_PIN_13 );
-	  uint32_t current_tick = HAL_GetTick();
-
-	  /* Check the button is pressed or not for 3seconds */
-	  if( ( OTA_Pin_state != GPIO_PIN_RESET ) || ( current_tick > end_tick ) ) {
-		  /* Either timeout or Button is pressed */
-		  break;
-	  }
-  } while (1);
-
-  /*Start the Firmware or Application update */
-  if( OTA_Pin_state == GPIO_PIN_SET )
-  {
-    printf("Starting Firmware Download!!!\r\n");
-    /* OTA Request. Receive the data from the UART4 and flash */
-    if( etx_ota_download_and_flash() != ETX_OTA_EX_OK )
-    {
-      /* Error. Don't process. */
-      printf("OTA Update : ERROR!!! HALT!!!\r\n");
-      while( 1 );
-    }
-    else
-    {
-      /* Reset to load the new application */
-      printf("Firmware update is done!!! Rebooting...\r\n");
-      HAL_NVIC_SystemReset();
-    }
+  // run OTA firmware updater
+  if(etx_ota_download_and_flash()) {
+	/* Error. Don't process. */
+	printf("OTA Update : ERROR!!! HALT!!!\r\n");
+	while( 1 );
   }
 
-  // Jump to app
-  goto_application();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -143,6 +154,33 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  printf("in main loop\n");
+	  HAL_Delay(10000);
+
+	// Receive and send data from UART3
+//	int index = 0;
+//	char* data = "Hello!";
+//	int size = strlen(data);
+//
+//	HAL_StatusTypeDef ret = HAL_UART_Receive(&huart3, Rx_Buffer + index, OTA_RESPONSE_PACKET_SIZE, HAL_MAX_DELAY);
+//	if (ret != HAL_OK) {
+//		printf("UART RECEIVE FAILED!\n");
+//		break;
+//	}
+//
+//	printf("Received data: ");
+//	for (int i = 0; i < OTA_RESPONSE_PACKET_SIZE; i++) {
+//		printf("%x ", Rx_Buffer[i]);
+//	}
+//	printf("\n");
+//
+//	printf("Sending data: %s\n", data);
+//	ret = HAL_UART_Transmit(&huart3, (uint8_t*) data, size, HAL_MAX_DELAY);
+//	if (ret != HAL_OK) {
+//		printf("UART TRANSMIT FAILED!\n");
+//		break;
+//	}
+//	printf("Send data successfully");
 
     /* USER CODE BEGIN 3 */
   }
