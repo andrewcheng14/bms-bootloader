@@ -10,7 +10,7 @@
 
 #define INC_ETX_OTA_UPDATE_H_
 
-#define APP_FLASH_ADDR 0x08040000  // Application's flash address
+#define APP_FLASH_ADDR 0x08040000U  // Application's flash address
 
 #define PACKET_SOF 0x02  // Start of Frame
 #define PACKET_EOF 0x03  // End of Frame
@@ -25,17 +25,17 @@
 /* Enum definitions */
 typedef enum ota_state {
 	IDLE = 0,
-	OTA_START,
-	OTA_HEADER,
-	OTA_DATA,
-	OTA_END,
+	START,
+	HEADER,
+	DATA,
+	END,
 } ota_state_t;
 
 typedef enum ota_packet_type {
-    COMMAND = 0,
-    HEADER,
-    DATA,
-    RESPONSE,
+    OTA_COMMAND = 0,
+    OTA_HEADER,
+    OTA_DATA,
+    OTA_RESPONSE,
 } ota_packet_type_t;
 
 typedef enum ota_command {
