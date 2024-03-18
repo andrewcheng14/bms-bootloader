@@ -48,7 +48,6 @@ UART_HandleTypeDef huart2;  // used as virtual com port (printf)
 UART_HandleTypeDef huart3;  // used for OTA update
 
 /* USER CODE BEGIN PV */
-static uint8_t Rx_Buffer[MAX_BUF_SIZE];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -99,53 +98,51 @@ int main(void)
   printf("Starting Bootloader\n");
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);  // Turn on LD2 (Green LED)
   HAL_Delay(1000);
-//
-//  printf("Press the User Button LD2 to trigger OTA update...\r\n");
-//
-//  /* Check the GPIO for 3 seconds */
-//  GPIO_PinState OTA_Pin_state;
-//  uint32_t end_tick = HAL_GetTick() + 3000;   // from now to 3 Seconds
-//
-//  printf("Press the User Button PC13 to trigger OTA update...\r\n");
-//  do {
-//	  OTA_Pin_state = HAL_GPIO_ReadPin( GPIOC, GPIO_PIN_13 );
-//	  uint32_t current_tick = HAL_GetTick();
-//
-//	  /* Check the button is pressed or not for 3seconds */
-//	  if( ( OTA_Pin_state != GPIO_PIN_RESET ) || ( current_tick > end_tick ) ) {
-//		  /* Either timeout or Button is pressed */
-//		  break;
-//	  }
-//  } while (1);
-//
-//  /*Start the Firmware or Application update */
-//  if( OTA_Pin_state == GPIO_PIN_SET )
-//  {
-//    printf("Starting Firmware Download!!!\r\n");
-//    /* OTA Request. Receive the data from the UART4 and flash */
-//    if( etx_ota_download_and_flash() != ETX_OTA_EX_OK )
-//    {
-//      /* Error. Don't process. */
-//      printf("OTA Update : ERROR!!! HALT!!!\r\n");
-//      while( 1 );
-//    }
-//    else
-//    {
-//      /* Reset to load the new application */
-//      printf("Firmware update is done!!! Rebooting...\r\n");
-//      HAL_NVIC_SystemReset();
-//    }
-//  }
-//
-//  // Jump to app
-//  goto_application();
+
+  /* Check the GPIO for 3 seconds */
+  GPIO_PinState OTA_Pin_state;
+  uint32_t end_tick = HAL_GetTick() + 3000;   // from now to 3 Seconds
+
+  printf("Hold the User Button PC13 to trigger OTA update...\r\n");
+  do {
+	  OTA_Pin_state = HAL_GPIO_ReadPin( GPIOC, GPIO_PIN_13 );
+	  uint32_t current_tick = HAL_GetTick();
+
+	  /* Allow 3 seconds for the user to hit the button */
+	  if( ( OTA_Pin_state == GPIO_PIN_RESET ) || ( current_tick > end_tick ) ) {
+		  /* Either timeout or Button is pressed */
+		  break;
+	  }
+  } while (1);
+
+  /*Start the Firmware or Application update */
+  if( OTA_Pin_state == GPIO_PIN_RESET )
+  {
+    printf("Starting Firmware Download!!!\r\n");
+    /* OTA Request. Receive the data from the UART4 and flash */
+    if(etx_ota_download_and_flash())
+    {
+      /* Error. Don't process. */
+      printf("OTA Update : ERROR!!! HALT!!!\r\n");
+      while( 1 );
+    }
+    else
+    {
+      /* Reset to load the new application */
+      printf("Firmware update is done!!! Rebooting...\r\n");
+      HAL_NVIC_SystemReset();
+    }
+  }
+
+  // Jump to app
+  goto_application();
 
   // run OTA firmware updater
-  if(etx_ota_download_and_flash()) {
-	/* Error. Don't process. */
-	printf("OTA Update : ERROR!!! HALT!!!\r\n");
-	while( 1 );
-  }
+//  if(etx_ota_download_and_flash()) {
+//	/* Error. Don't process. */
+//	printf("OTA Update : ERROR!!! HALT!!!\r\n");
+//	while( 1 );
+//  }
 
   /* USER CODE END 2 */
 

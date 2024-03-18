@@ -71,6 +71,7 @@ static int receiveOtaPacket(uint8_t* buf, uint16_t size) {
 	// Parse Ota Packet
 	HAL_StatusTypeDef ret;
 	uint16_t index = 0;
+	memset(buf, 0, PACKET_MAX_SIZE);
 
 	// Receive the SOF, packet type, packet number, and payload length (6 bytes)
 	ret = HAL_UART_Receive(&huart3, buf + index, 6, HAL_MAX_DELAY);
@@ -78,18 +79,14 @@ static int receiveOtaPacket(uint8_t* buf, uint16_t size) {
 		printf("HAL Receive failed!\n");
 		return 0;
 	}
-
 	if (buf[index] != PACKET_SOF) {
 		printf("Did not receive SOF!\n");
 		return 0;
 	}
+	index += 6;
 
-	// skip over SOF (1 byte), packet type (1 byte), and packet number (2 bytes)
-	index += 4;
-
-	uint16_t payload_len = *((uint16_t*) &buf[index]);
-	index += 2;
-
+	// Get payload length (bytes 4 and 5)
+	uint16_t payload_len = *((uint16_t*) &buf[4]);
 	// receive payload
 	ret = HAL_UART_Receive(&huart3, buf + index, payload_len, HAL_MAX_DELAY);
 	if (ret != HAL_OK) {
@@ -98,7 +95,7 @@ static int receiveOtaPacket(uint8_t* buf, uint16_t size) {
 	}
 	index += payload_len;
 
-	// receive CRC
+	// receive crc
 	ret = HAL_UART_Receive(&huart3, buf + index, 4, HAL_MAX_DELAY);
 	if (ret != HAL_OK) {
 		printf("HAL Receive failed!\n");
@@ -112,12 +109,11 @@ static int receiveOtaPacket(uint8_t* buf, uint16_t size) {
 		printf("HAL Receive failed!\n");
 		return 0;
 	}
-
 	if (buf[index] != PACKET_EOF) {
 		printf("Did not receive EOF!\n");
 		return 0;
 	}
-	index += 1;
+	index++;
 
 	return index;
 }
@@ -145,6 +141,7 @@ static int sendOtaResponse(uint8_t status) {
 
 static int processOtaPacket(uint8_t* buf, uint16_t size) {
     OtaCommandPacket* packet = (OtaCommandPacket*) buf;
+    printf("Here!!");
 
     // Check if we received a ABORT command
     if (packet->packet_type == OTA_COMMAND && packet->cmd == OTA_ABORT_CMD) {
@@ -162,6 +159,7 @@ static int processOtaPacket(uint8_t* buf, uint16_t size) {
             }
             printf("Error: Expected OTA start command!\n");
             break;
+
         case HEADER:
             OtaHeaderPacket* header_packet = (OtaHeaderPacket*) buf;
             if (header_packet->packet_type == OTA_HEADER) {
@@ -173,11 +171,11 @@ static int processOtaPacket(uint8_t* buf, uint16_t size) {
             }
             printf("Error: Expected OTA header, received packet type: %d!\n", header_packet->packet_type);
             break;
+
         case DATA:
             OtaDataPacket* data_packet = (OtaDataPacket*) buf;
             if (data_packet->packet_type == OTA_DATA) {
-            	uint8_t* data = (uint8_t*)
-            			&(data_packet->payload);
+            	uint8_t* data = (uint8_t*) &(data_packet->payload);
             	flashWrite(data, data_packet->payload_len, (ota_fw_received_size == 0));
                 ota_fw_received_size += data_packet->payload_len;
 //                printf("Received %d bytes of data!\n", data_packet->payload_len);
@@ -188,6 +186,7 @@ static int processOtaPacket(uint8_t* buf, uint16_t size) {
             }
             printf("Error: Expected OTA data!\n");
             break;
+
         case END:
             if (packet->packet_type == OTA_COMMAND && packet->cmd == OTA_END_CMD) {
                 printf("Received OTA END command!\n");
@@ -197,6 +196,7 @@ static int processOtaPacket(uint8_t* buf, uint16_t size) {
             }
             printf("Error: Expected OTA end command!\n");
             break;
+
         default:
             break;
     }
@@ -236,7 +236,7 @@ static int flashWrite(uint8_t* data, uint16_t data_len, bool first_write) {
 
 	// Write to flash
 	for (int i = 0; i < data_len; i++) {
-		ret = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, APP_FLASH_ADDR + ota_fw_received_size, data[i]);
+		ret = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, APP_FLASH_ADDR + ota_fw_received_size + i, data[i]);
 		if (ret != HAL_OK) {
 			printf("Flash program failed! only %d bytes written to flash!\n", i);
 			return -1;

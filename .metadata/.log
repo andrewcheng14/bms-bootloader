@@ -1,0 +1,13 @@
+!SESSION 2024-02-24 02:00:10.302 -----------------------------------------------
+eclipse.buildId=Version 1.14.0
+java.version=17.0.8.1
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=en_US
+Framework arguments:  -keyring /Users/andrewcheng/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -keyring /Users/andrewcheng/.eclipse_keyring
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2024-02-24 02:00:45.179
+!MESSAGE Log4j2 initialized with config file /Users/andrewcheng/STM32CubeIDE/bootloader/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2024-02-24 02:00:49.932
+!MESSAGE Started RMI Server, listening on port 41337
