@@ -221,8 +221,8 @@ static int flashWrite(uint8_t* data, uint16_t data_len, bool first_write) {
 		uint32_t sector_error;
 
 		EraseInitStruct.TypeErase     = FLASH_TYPEERASE_SECTORS;
-		EraseInitStruct.Sector        = FLASH_SECTOR_6;
-		EraseInitStruct.NbSectors     = 2;                    //erase 2 sectors(6,7)
+		EraseInitStruct.Sector        = FLASH_SECTOR_2;
+		EraseInitStruct.NbSectors     = 6;                    //erase 6 sectors (2, 3, 4, 5, 6, 7)
 		EraseInitStruct.VoltageRange  = FLASH_VOLTAGE_RANGE_3;
 
 		printf("Erasing flash memory sectors %ld - %ld", EraseInitStruct.Sector, EraseInitStruct.Sector + EraseInitStruct.NbSectors - 1);

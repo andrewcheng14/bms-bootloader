@@ -10,14 +10,14 @@
 
 #define INC_ETX_OTA_UPDATE_H_
 
-#define APP_FLASH_ADDR 0x08040000U  // Application's flash address
+#define APP_FLASH_ADDR 0x08008000U  // Application's flash address
 
 #define PACKET_SOF 0x02  // Start of Frame
 #define PACKET_EOF 0x03  // End of Frame
 #define PACKET_ACK 0x00  // Acknowledge
 #define PACKET_NACK 0x01 // Not Acknowledge
 
-#define PACKET_MAX_PAYLOAD_SIZE 256  // Maximum payload size for a OTA packet in bytes
+#define PACKET_MAX_PAYLOAD_SIZE 2048  // Maximum payload size for a OTA packet in bytes
 #define PACKET_OVERHEAD 11 // 11 bytes used for a OTA packet's metadata (all fields except payload)
 #define PACKET_MAX_SIZE (PACKET_MAX_PAYLOAD_SIZE + PACKET_OVERHEAD)  // Max size of OTA packet in bytes
 #define APP_FW_MAX_SIZE (0x0807FFFF - 0x08008000)  // Sector 7 end - Sector 2 start

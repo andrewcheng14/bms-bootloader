@@ -1,5 +1,5 @@
 ../Core/Src/etx_ota_update.c:41:5:etx_ota_download_and_flash	4
 ../Core/Src/etx_ota_update.c:70:12:receiveOtaPacket	7
-../Core/Src/etx_ota_update.c:174:12:sendOtaResponse	2
-../Core/Src/etx_ota_update.c:195:12:processOtaPacket	14
-../Core/Src/etx_ota_update.c:264:12:flashWrite	7
+../Core/Src/etx_ota_update.c:121:12:sendOtaResponse	2
+../Core/Src/etx_ota_update.c:142:12:processOtaPacket	14
+../Core/Src/etx_ota_update.c:211:12:flashWrite	7

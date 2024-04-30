@@ -357,14 +357,14 @@ static void goto_application(void)
 {
 	printf("Jumping to Application\n");
 
-	void (*app_reset_handler)(void) = (void*)(*((volatile uint32_t*) (0x08040000 + 4U)));
+	void (*app_reset_handler)(void) = (void*)(*((volatile uint32_t*) (0x08008000 + 4U)));
 
 	// turn off LED
 	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
 	HAL_RCC_DeInit();
 	HAL_DeInit();
-	// __set_MSP(*(volatile uint32_t*) 0x08040000);
+//	 __set_MSP(*(volatile uint32_t*) 0x08008000);
 	SysTick->CTRL = 0;
 	SysTick->LOAD = 0;
 	SysTick->VAL = 0;
