@@ -1,5 +1,0 @@
-../Core/Src/etx_ota_update.c:41:5:etx_ota_download_and_flash	16	static
-../Core/Src/etx_ota_update.c:70:12:receiveOtaPacket	24	static
-../Core/Src/etx_ota_update.c:121:12:sendOtaResponse	32	static
-../Core/Src/etx_ota_update.c:142:12:processOtaPacket	32	static
-../Core/Src/etx_ota_update.c:211:12:flashWrite	56	static

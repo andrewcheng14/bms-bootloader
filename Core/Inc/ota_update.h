@@ -1,14 +1,7 @@
-/*
- * etx_ota_update.h
- *
- *  Created on: 26-Jul-2021
- *      Author: EmbeTronicX
- */
+#ifndef OTA_UPDATE_H
+#define OTA_UPDATE_H
 
-#ifndef INC_ETX_OTA_UPDATE_H_
 #include <stdint.h>
-
-#define INC_ETX_OTA_UPDATE_H_
 
 #define APP_FLASH_ADDR 0x08008000U  // Application's flash address
 
@@ -123,5 +116,6 @@ typedef struct OtaResponsePacket {
 }__attribute__((packed)) OtaResponsePacket;
 
 
-int etx_ota_download_and_flash( void );
-#endif /* INC_ETX_OTA_UPDATE_H_ */
+int runOtaUpdate(void);
+
+#endif  // OTA_UPDATE_H
