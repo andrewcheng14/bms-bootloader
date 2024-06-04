@@ -96,59 +96,63 @@ int main(void)
   MX_UART5_Init();
   MX_RTC_Init();
   /* USER CODE BEGIN 2 */
-//  printf("Starting Bootloader\n");
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);  // Turn on LD2 (Green LED)
-//  HAL_Delay(1000);
-//  char str[50] = "hello!";
-//  uint32_t len = strlen(str);
-//  HAL_StatusTypeDef ret = HAL_UART_Transmit(&huart5, (uint8_t*) str, len, HAL_MAX_DELAY);
+  uint32_t magic_value = *(__IO uint32_t*)OTA_CONFIG_SECTOR;
+  if (magic_value == OTA_MAGIC_VALUE) {  // Check for magic value in config sector indicating an OTA update was requested
+      // Clear the magic value to prevent repeated OTA updates
+      HAL_FLASH_Unlock();
+      __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+      FLASH_Erase_Sector(FLASH_SECTOR_2, VOLTAGE_RANGE_3);
+      HAL_FLASH_Lock();
 
-  runOtaUpdate();
+      // Initiate the OTA update process
+      runOtaUpdate();
 
-  /* Check the GPIO for 3 seconds */
-//  GPIO_PinState OTA_Pin_state;
-//  uint32_t end_tick = HAL_GetTick() + 3000;   // from now to 3 Seconds
+      // If OTA_Update() does not reset the system, you can add a reset here
+      HAL_StatusTypeDef ret;
 
-//  printf("Hold the User Button PC13 to trigger OTA update...\r\n");
-//  do {
-//	  OTA_Pin_state = HAL_GPIO_ReadPin( GPIOC, GPIO_PIN_13 );
-//	  uint32_t current_tick = HAL_GetTick();
-//
-//	  /* Allow 3 seconds for the user to hit the button */
-//	  if( ( OTA_Pin_state == GPIO_PIN_RESET ) || ( current_tick > end_tick ) ) {
-//		  /* Either timeout or Button is pressed */
-//		  break;
-//	  }
-//  } while (1);
+      // Unlock the Flash memory for write access
+      ret = HAL_FLASH_Unlock();
+      if (ret != HAL_OK) {
+    	  char msg[] = "Error unlocking flash while attempting OTA update!";
+    	  HAL_UART_Transmit(&huart5, (uint8_t*) msg, strlen(msg) + 1, HAL_MAX_DELAY);
+    	  Error_Handler();
+      }
 
-  /*Start the Firmware or Application update */
-//  if( OTA_Pin_state == GPIO_PIN_RESET )
-//  {
-//    printf("Starting Firmware Download!!!\r\n");
-//    /* OTA Request. Receive the data from the UART4 and flash */
-//    if(runOtaUpdate())
-//    {
-//      /* Error. Don't process. */
-//      printf("OTA Update : ERROR!!! HALT!!!\r\n");
-//      while( 1 );
-//    }
-//    else
-//    {
-//      /* Reset to load the new application */
-//      printf("Firmware update is done!!! Rebooting...\r\n");
-//      HAL_NVIC_SystemReset();
-//    }
-//  }
+      // Clear any existing flags
+      __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
 
-  // Jump to app
+      // Erase the specific sector where the magic value is stored
+      FLASH_Erase_Sector(FLASH_SECTOR_2, VOLTAGE_RANGE_3);
+      if (ret != HAL_OK) {
+    	  char msg[] = "Error erasing config sector while attempting OTA update!";
+    	  HAL_UART_Transmit(&huart5, (uint8_t*) msg, strlen(msg) + 1, HAL_MAX_DELAY);
+          HAL_FLASH_Lock();
+          Error_Handler();
+      }
+
+      // write a different value to the address to explicitly clear it
+      uint32_t clear_value = 0xFFFFFFFF;
+      ret = HAL_FLASH_Program(TYPEPROGRAM_WORD, OTA_CONFIG_SECTOR, clear_value);
+      if (ret != HAL_OK) {
+    	  char msg[] = "Error writing to config sector while attempting OTA update!";
+    	  HAL_UART_Transmit(&huart5, (uint8_t*) msg, strlen(msg) + 1, HAL_MAX_DELAY);
+          HAL_FLASH_Lock();
+    	  Error_Handler();
+      }
+
+      // Lock the Flash memory again
+      ret = HAL_FLASH_Lock();
+      if (ret != HAL_OK) {
+    	  char msg[] = "Error locking flash while attempting OTA update!";
+    	  HAL_UART_Transmit(&huart5, (uint8_t*) msg, strlen(msg) + 1, HAL_MAX_DELAY);
+    	  Error_Handler();
+      }
+
+      HAL_NVIC_SystemReset();
+  }
+
+  // No OTA Magic Value found in config sector, jump to application
   goto_application();
-
-  // run OTA firmware updater
-//  if(etx_ota_download_and_flash()) {
-//	/* Error. Don't process. */
-//	printf("OTA Update : ERROR!!! HALT!!!\r\n");
-//	while( 1 );
-//  }
 
   /* USER CODE END 2 */
 
@@ -348,16 +352,11 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 static void goto_application(void)
 {
-	printf("Jumping to Application\n");
-
-	void (*app_reset_handler)(void) = (void*)(*((volatile uint32_t*) (0x08008000 + 4U)));
-
-	// turn off LED
-	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+	void (*app_reset_handler)(void) = (void*)(*((volatile uint32_t*) (APP_FLASH_ADDR + 4U)));
 
 	HAL_RCC_DeInit();
 	HAL_DeInit();
-//	 __set_MSP(*(volatile uint32_t*) 0x08008000);
+//	__set_MSP(*(volatile uint32_t*) APP_FLASH_ADDR);
 	SysTick->CTRL = 0;
 	SysTick->LOAD = 0;
 	SysTick->VAL = 0;

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define APP_FLASH_ADDR 0x08008000U  // Application's flash address
+#define APP_FLASH_ADDR 0x0800C000U  // Application's flash address
 
 #define PACKET_SOF 0x02  // Start of Frame
 #define PACKET_EOF 0x03  // End of Frame
@@ -14,6 +14,9 @@
 #define PACKET_OVERHEAD 11 // 11 bytes used for a OTA packet's metadata (all fields except payload)
 #define PACKET_MAX_SIZE (PACKET_MAX_PAYLOAD_SIZE + PACKET_OVERHEAD)  // Max size of OTA packet in bytes
 #define APP_FW_MAX_SIZE (0x0807FFFF - 0x08008000)  // Sector 7 end - Sector 2 start
+
+#define OTA_MAGIC_VALUE 0xDEADBEEF
+#define OTA_CONFIG_SECTOR 0x08008000
 
 /* Enum definitions */
 typedef enum ota_state {

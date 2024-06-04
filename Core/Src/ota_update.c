@@ -26,7 +26,7 @@ static int flashWrite(uint8_t* data, uint16_t data_len, bool first_write);
   * @retval ETX_OTA_EX_
   */
 int runOtaUpdate() {
-//	printf("Starting OTA download\r\n");
+	sendOtaResponse(PACKET_ACK);  // Send Ack to signal that we are ready to start OTA
 
 	ota_state = START;
 	int bytes_received = 0;
@@ -34,24 +34,15 @@ int runOtaUpdate() {
 	while (ota_state != IDLE) {
 		memset(RX_BUFFER, 0, PACKET_MAX_SIZE);
 
-//		while (1) {
-//			HAL_UART_Receive(&huart5, RX_BUFFER, 1, HAL_MAX_DELAY);
-//			printf("Received byte: %02X\n", RX_BUFFER[0]);
-//		}
-
 		bytes_received = receiveOtaPacket(RX_BUFFER, PACKET_MAX_SIZE);
-//		printf("bytes received: %d\n", bytes_received);
-
 		if (bytes_received > 0) {
 			if (processOtaPacket(RX_BUFFER, bytes_received)) {
-//				printf("Error! HALTING!\n");
 				sendOtaResponse(PACKET_NACK);
 				return -1;
 			} else {
 				sendOtaResponse(PACKET_ACK);
 			}
 		} else {
-//			printf("No bytes received!!");
 			continue;
 		}
 	}
@@ -69,13 +60,9 @@ static int receiveOtaPacket(uint8_t* buf, uint16_t size) {
 	// Receive the SOF, packet type, packet number, and payload length (6 bytes)
 	ret = HAL_UART_Receive(&huart5, buf + index, 6, HAL_MAX_DELAY);
 	if (ret != HAL_OK) {
-//		printf("HAL Receive failed!\n");
 		return 0;
 	}
-//	for (int i = 0; i < 6; i++) {
-//		printf("%x ", buf[i]);
-//	}
-//	printf("\n");
+
 	if (buf[index] != PACKET_SOF) {
 //		printf("Did not receive SOF!\n");
 		return 0;
