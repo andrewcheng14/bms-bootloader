@@ -1,5 +1,6 @@
-../Core/Src/ota_update.c:28:5:runOtaUpdate	16	static
-../Core/Src/ota_update.c:54:12:receiveOtaPacket	24	static
-../Core/Src/ota_update.c:105:12:sendOtaResponse	32	static
-../Core/Src/ota_update.c:126:12:processOtaPacket	32	static
-../Core/Src/ota_update.c:193:12:flashWrite	56	static
+../Core/Src/ota_update.c:42:10:CalcCRC	32	static
+../Core/Src/ota_update.c:58:5:runOtaUpdate	16	static
+../Core/Src/ota_update.c:85:12:receiveOtaPacket	32	static
+../Core/Src/ota_update.c:147:12:sendOtaResponse	32	static
+../Core/Src/ota_update.c:172:12:processOtaPacket	40	static
+../Core/Src/ota_update.c:242:12:flashWrite	56	static

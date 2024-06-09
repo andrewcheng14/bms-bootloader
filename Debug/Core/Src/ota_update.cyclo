@@ -1,5 +1,6 @@
-../Core/Src/ota_update.c:28:5:runOtaUpdate	4
-../Core/Src/ota_update.c:54:12:receiveOtaPacket	7
-../Core/Src/ota_update.c:105:12:sendOtaResponse	2
-../Core/Src/ota_update.c:126:12:processOtaPacket	14
-../Core/Src/ota_update.c:193:12:flashWrite	7
+../Core/Src/ota_update.c:42:10:CalcCRC	2
+../Core/Src/ota_update.c:58:5:runOtaUpdate	4
+../Core/Src/ota_update.c:85:12:receiveOtaPacket	8
+../Core/Src/ota_update.c:147:12:sendOtaResponse	2
+../Core/Src/ota_update.c:172:12:processOtaPacket	15
+../Core/Src/ota_update.c:242:12:flashWrite	7

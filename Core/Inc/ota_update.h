@@ -13,7 +13,7 @@
 #define PACKET_MAX_PAYLOAD_SIZE 2048  // Maximum payload size for a OTA packet in bytes
 #define PACKET_OVERHEAD 11 // 11 bytes used for a OTA packet's metadata (all fields except payload)
 #define PACKET_MAX_SIZE (PACKET_MAX_PAYLOAD_SIZE + PACKET_OVERHEAD)  // Max size of OTA packet in bytes
-#define APP_FW_MAX_SIZE (0x0807FFFF - 0x08008000)  // Sector 7 end - Sector 2 start
+#define APP_FW_MAX_SIZE (0x0807FFFF - 0x0800C000)  // Sector 7 end - Sector 3 start
 
 #define OTA_MAGIC_VALUE 0xDEADBEEF
 #define OTA_CONFIG_SECTOR 0x08008000
